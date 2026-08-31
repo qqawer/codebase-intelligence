@@ -1,6 +1,6 @@
 ---
 name: codebase-intelligence
-description: Analyze software repositories to explain architecture, execution paths, important modules, design decisions, engineering strengths, technical difficulty, technical value, distinctive mechanisms, and plausible innovation using evidence-driven repository tracing, adaptive analysis depth, counterevidence, and calibrated confidence. Use when Codex needs to deeply understand, evaluate, document, compare, or extract technical insights from a source-code repository or substantial codebase.
+description: Analyze substantial software repositories through execution tracing, adaptive depth, counterevidence, and comparator research. Use for evidence-backed architecture reports, technical-mechanism ranking, design-quality or learning-value assessment, and cautious originality or innovation evaluation. Do not use for narrow one-file questions or ordinary implementation and code-review tasks.
 ---
 
 # Codebase Intelligence
@@ -230,13 +230,17 @@ Do not confuse endless research with rigor.
 
 ## Supporting references
 
-Read these only when needed:
+Load references progressively instead of reading all of them by default:
 
-- `references/evidence-confidence.md`
-- `references/design-and-value.md`
-- `references/innovation.md`
-- `references/failure-modes.md`
-- `references/report-format.md`
+- Read `references/evidence-confidence.md` when setting the source mode, combining evidence channels, assigning
+  confidence, or describing evidence ceilings and missing source material.
+- Read `references/design-and-value.md` for Tier 3+ design analysis, deep-abstraction assessment, leverage, locality,
+  invariants, and technical-value ranking.
+- Read `references/innovation.md` only for Tier 5 originality or innovation investigation and comparator-ledger work.
+- Read `references/failure-modes.md` when a known failure pattern appears and for the final adversarial check on a full
+  analysis.
+- Read `references/report-format.md` when producing or reviewing a full Project Intelligence Report; do not force the
+  complete template onto a narrow question.
 
 ## Final output
 
