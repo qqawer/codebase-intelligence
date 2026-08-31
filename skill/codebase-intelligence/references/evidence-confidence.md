@@ -147,6 +147,17 @@ A local repository is available at a known revision.
 
 This is the strongest mode for source-level coverage.
 
+Record:
+
+- repository identity
+- exact commit or immutable revision
+- branch or tag when useful
+- whether tracked files are modified
+- missing submodules, LFS objects, generated sources, or other material gaps
+
+`Local` describes access; `pinned` describes reproducibility. A checkout with an unknown revision or unrecorded local
+changes is not fully pinned.
+
 ### remote-pinned
 
 A specific remote revision can be inspected reliably.

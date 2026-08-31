@@ -20,6 +20,9 @@ Explain concisely:
 
 State the source mode and major evidence limitations.
 
+When available, include the repository identity, exact revision, analysis date, worktree state, and material source
+gaps. This information is required when the report will be compared with another run.
+
 ## 2. Repository and Architecture Map
 
 Describe:

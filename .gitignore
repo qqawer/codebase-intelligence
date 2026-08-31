@@ -1,2 +1,6 @@
 .DS_Store
 **/.DS_Store
+
+# Local research and conversation archive; publish in a separate repository.
+/history/
+/history.docx

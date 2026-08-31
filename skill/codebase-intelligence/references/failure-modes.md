@@ -528,7 +528,27 @@ Independent channels may include:
 
 ---
 
-## 22. Source-mode overreach
+## 22. Moving-target regression
+
+### Failure
+
+Compare two analysis runs against a moving branch or different repository revisions and attribute every changed finding
+to the Skill or methodology.
+
+### Why it fails
+
+The repository itself may have added, removed, renamed, documented, or reorganized mechanisms between runs. Local
+modifications, missing submodules, or incomplete LFS content can create the same distortion.
+
+### Correction
+
+Record the exact revision and worktree state for every run. For a strict regression, reuse the same immutable source
+revision and comparable source availability. If that is impossible, classify the run as a targeted validation and
+separate repository evolution from Skill behavior.
+
+---
+
+## 23. Source-mode overreach
 
 ### Failure
 
@@ -548,7 +568,7 @@ For `indexed-snapshot`, explicitly state that complete source coverage is not es
 
 ---
 
-## 23. Missing history fallback
+## 24. Missing history fallback
 
 ### Failure
 
@@ -567,7 +587,7 @@ Use fallback signals:
 
 ---
 
-## 24. Endless deep dive
+## 25. Endless deep dive
 
 ### Failure
 
@@ -587,7 +607,7 @@ Rigor requires stopping rules.
 
 ---
 
-## 25. Highlight recall failure
+## 26. Highlight recall failure
 
 ### Failure
 
@@ -605,6 +625,32 @@ Before final synthesis run the Highlight Recall Challenge:
 6. Which broad subsystem label may be masking a specific mechanism?
 
 Treat false negatives as seriously as false positives.
+
+---
+
+## 27. Context flooding mistaken for coverage
+
+### Failure
+
+Dump large repository-wide search results into context and treat the number of matches as evidence of complete
+discovery.
+
+### Why it fails
+
+High-volume output hides mechanism boundaries, duplicates header and implementation signals, overweights common terms,
+and consumes the context needed for semantic tracing.
+
+### Correction
+
+Discover in stages:
+
+1. inventory directories and repository boundaries
+2. summarize test and benchmark clusters
+3. enumerate mechanism-bearing files
+4. refine searches within candidate subsystems
+5. read representative implementations and callers
+
+Bound raw output, exclude generated/vendor trees by default, and record covered areas in a ledger.
 
 ---
 
@@ -627,6 +673,8 @@ Before finishing, ask:
 - Did I overclaim outcomes?
 - Did I actively seek counterevidence?
 - Are evidence channels genuinely independent?
+- Did I record the exact revision and worktree state when available?
 - Am I respecting the source-mode evidence ceiling?
 - Did I run the Highlight Recall Challenge?
+- Did I bound raw discovery output instead of flooding context?
 - Do I have a defensible reason to stop?

@@ -1,6 +1,6 @@
 ---
 name: codebase-intelligence
-description: Analyze software repositories to explain architecture, execution paths, important modules, design decisions, engineering strengths, technical difficulty, technical value, distinctive mechanisms, and plausible innovation using evidence-driven repository tracing, adaptive analysis depth, counterevidence, and calibrated confidence. Use when ChatGPT needs to deeply understand, evaluate, document, compare, or extract technical insights from a source-code repository or substantial codebase.
+description: Analyze software repositories to explain architecture, execution paths, important modules, design decisions, engineering strengths, technical difficulty, technical value, distinctive mechanisms, and plausible innovation using evidence-driven repository tracing, adaptive analysis depth, counterevidence, and calibrated confidence. Use when Codex needs to deeply understand, evaluate, document, compare, or extract technical insights from a source-code repository or substantial codebase.
 ---
 
 # Codebase Intelligence
@@ -31,6 +31,12 @@ Classify available evidence:
 
 Do not claim exhaustive source coverage when the available mode cannot support it.
 
+Record the repository identity, exact revision, analysis date, and worktree state when available. Also record material
+source gaps such as unavailable submodules, Git LFS objects, generated sources, or excluded extensions.
+
+A local checkout is not `local-pinned` merely because it is on disk. If the revision or local modifications are unknown,
+state that limitation and do not present cross-run differences as methodology regressions.
+
 ## 2. Discover broadly before analyzing deeply
 
 Build a repository coverage map.
@@ -48,6 +54,10 @@ Identify:
 - generated/vendor boundaries
 
 Prefer complete discovery with selective depth.
+
+Use staged, bounded discovery: inventory the tree and test/benchmark clusters first, then refine searches and read
+representative implementations. Exclude generated and vendor trees unless they are directly relevant. Do not flood the
+analysis context with unfiltered repository-wide matches and mistake search volume for coverage.
 
 ## 3. Run dual candidate discovery
 
