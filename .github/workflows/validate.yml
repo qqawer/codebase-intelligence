@@ -1,0 +1,30 @@
+name: Validate Skill
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate package and local links
+        run: python3 scripts/validate_skill_package.py .
+      - name: Run deterministic tests
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - name: Compile scripts
+        run: python3 -m compileall -q scripts
+      - name: Smoke-test repository inventory
+        run: |
+          python3 scripts/repository_snapshot.py . --format markdown --max-items 5 > /tmp/repository-snapshot.md
+          python3 scripts/repository_snapshot.py . --format json --max-items 5 > /tmp/repository-snapshot.json

@@ -219,6 +219,13 @@ python3 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py .
 The validator checks structure and metadata. Behavioral confidence comes from realistic repository analyses, not from
 schema validation alone.
 
+The repository also includes a standard-library package validator for CI and environments without Codex's bundled
+system skills:
+
+```bash
+python3 scripts/validate_skill_package.py .
+```
+
 Run all deterministic script tests, then smoke-test the bundled read-only inventory in both output formats:
 
 ```bash
