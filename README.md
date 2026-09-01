@@ -116,10 +116,17 @@ boolean. `research_run.py` records explicitly authorized commands or unavailable
 identity, immutable source links, line ranges, publication safety, evidence consistency, and protocol values. See
 [`references/run-record.md`](references/run-record.md) for the workflow.
 
+Analysis depth is adaptive. A normal repository-research request uses a standard architecture pass with targeted
+runtime checks; the frozen-ledger, comparator, full-suite, and publication workflow is reserved for comprehensive,
+ranked, originality-focused, or explicitly publishable work. This keeps routine analysis from paying the latency cost
+of the full research protocol.
+
 For a new clean local checkout, `research_session.py` orchestrates the mechanical boundaries without automating the
 analysis itself: `init` fixes identity and creates the standard session at the inventoried phase, `status` reports the
-next legal phase and gate blockers, and `publish` strictly validates, finalizes, and indexes an already synthesized
-report. It never selects technical highlights, runs target commands, commits, or pushes.
+next legal phase and gate blockers, and `publish` redacts machine-local paths, preserves raw and publication-safe
+output hashes, then strictly validates, finalizes, and indexes an already synthesized report. It never selects
+technical highlights, runs target commands, commits, or pushes. `publication_safety.py` exposes the same deterministic
+sanitizer for custom publication workflows.
 
 `source_link.py` generates report-ready GitHub citations from a local checkout, resolving the repository remote and
 revision, validating the file and line range against committed content, and encoding the path. `build_research_index.py`
@@ -179,6 +186,7 @@ codebase-intelligence/
 │   ├── candidate_ledger.py
 │   ├── build_research_index.py
 │   ├── comparator_ledger.py
+│   ├── publication_safety.py
 │   ├── research_session.py
 │   ├── research_run.py
 │   ├── source_link.py

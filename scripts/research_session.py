@@ -249,6 +249,10 @@ def cmd_publish(args: argparse.Namespace) -> int:
     comparator = path.parent / str(comparator_name or "comparator-ledger.json")
     if not report.is_file() or not ledger.is_file() or not comparator.is_file():
         raise SystemExit("publish requires existing report, candidate ledger, and comparator ledger artifacts")
+    safety = [str(path.parent)]
+    if args.target_checkout:
+        safety.extend(["--target-checkout", str(args.target_checkout)])
+    invoke("publication_safety.py", *safety)
     receipt = path.parent / "validation-receipt.json"
     validator = [
         str(report), "--run-record", str(path), "--candidate-ledger", str(ledger), "--comparator-ledger", str(comparator),

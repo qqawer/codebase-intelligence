@@ -36,10 +36,13 @@ python3 scripts/research_session.py publish <report-directory> \
   --verdict "PASS WITH EVIDENCE LIMITATIONS"
 ```
 
-`publish` performs strict report validation, writes the report-bound receipt, advances and finalizes the record,
-regenerates the workspace index, validates index consistency, and runs a workspace validator when one is present. It
-does not commit or push Git changes. A validation warning stops publication. Use the lower-level commands below for
-remote-only evidence, historical migration, or workflows that do not fit the standard local layout.
+`publish` first redacts machine-local checkout, home, temporary, and common toolchain roots from publication artifacts.
+When command output changes, it preserves the original digest as `raw_output_sha256`, stores the redacted digest as
+`output_sha256`, and marks `output_redacted`. It then performs strict report validation, writes the report-bound
+receipt, advances and finalizes the record, regenerates the workspace index, validates index consistency, and runs a
+workspace validator when one is present. It does not commit or push Git changes. A residual known local-root pattern
+or validation warning stops publication. Use the lower-level commands below for remote-only evidence, historical
+migration, or workflows that do not fit the standard local layout.
 
 ## Create the record
 
@@ -90,7 +93,7 @@ python3 scripts/research_run.py exec \
   -- npm test
 ```
 
-The recorder captures exit status, duration, redacted argv, stdout/stderr logs, and a combined output hash. It deliberately does not capture environment variables or the absolute execution directory. `recorder_environment` describes the machine creating the sidecar; command-specific tool versions should be recorded by explicit commands. Common secret-bearing options, URL userinfo, query strings, and fragments are removed from the published argv, but callers must still avoid passing secrets on command lines.
+The recorder captures exit status, duration, redacted argv, stdout/stderr logs, and a combined output hash. It deliberately does not capture environment variables or the absolute execution directory. `recorder_environment` describes the machine creating the sidecar; command-specific tool versions should be recorded by explicit commands. Common secret-bearing options, URL userinfo, query strings, and fragments are removed from the published argv, but callers must still avoid passing secrets on command lines. For standard local publication, let `research_session.py publish` run the deterministic artifact sanitizer; for custom workflows, run `publication_safety.py <report-directory> --target-checkout <target-checkout>` before receipt generation.
 
 Record unavailable or externally observed evidence explicitly:
 

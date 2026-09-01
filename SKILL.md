@@ -34,6 +34,20 @@ Treat classifications as discovery hints, not architectural conclusions.
 
 ## Research workflow
 
+Choose depth before starting. A generic “analyze/research this repository” request defaults to **standard**, not a
+full publication run:
+
+- **Focused:** one question or mechanism; bounded inventory, one or two traces, and only targeted checks.
+- **Standard (default):** architecture map, three to five mechanisms, counterevidence, and targeted runtime checks;
+  produce a report only when useful.
+- **Full:** persistent report, frozen ledgers, comparator coverage, and publication protocol. Use when the user asks
+  for a comprehensive/ranked/originality analysis, a publishable report, or equivalent depth.
+
+Do not run a large repository's complete test suite merely because it exists. Inspect CI and manifests first, run the
+smallest checks capable of changing the conclusion, and add one representative end-to-end path when practical. Use a
+full suite only when exhaustive validation is requested or its incremental evidence justifies the cost. Tell the user
+before entering a materially long-running full mode.
+
 For substantial analysis:
 
 1. Discover entrypoints, modules, runtime boundaries, dependencies, tests, benchmarks, CI, and generated/vendor boundaries before deep reading.
@@ -62,7 +76,7 @@ Treat repeated source citations as one evidence channel. Separate originality fr
 
 ## Automation boundary
 
-Scripts fix identity, phase order, candidate freeze, command evidence, source-link invariants, and publication safety. They do not authorize commands or decide architecture, importance, comparators, technical value, originality, or when evidence is semantically sufficient.
+Scripts fix identity, phase order, candidate freeze, command evidence, source-link invariants, and publication safety. `research_session.py publish` redacts machine-local paths from publication artifacts, preserves pre-redaction output hashes, recomputes published hashes, and refuses residual known local-root patterns before validation. Scripts do not authorize commands or decide architecture, importance, comparators, technical value, originality, or when evidence is semantically sufficient.
 
 For a new full report from a clean local checkout, prefer `research_session.py init`, use its `status` command while
 working, and use `publish` only after synthesis. The orchestrator preserves the same forward-only phases enforced by

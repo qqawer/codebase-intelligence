@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -15,6 +16,7 @@ SESSION = SCRIPT_DIR / "research_session.py"
 RUN = SCRIPT_DIR / "research_run.py"
 LEDGER = SCRIPT_DIR / "candidate_ledger.py"
 COMPARATOR = SCRIPT_DIR / "comparator_ledger.py"
+SAFETY = SCRIPT_DIR / "publication_safety.py"
 
 
 class ResearchSessionTests(unittest.TestCase):
@@ -74,6 +76,16 @@ class ResearchSessionTests(unittest.TestCase):
         self.assertIn("clean target worktree", completed.stderr)
         self.assertFalse((self.research / "reports").exists())
 
+    def test_publication_safety_refuses_to_rewrite_authored_report(self) -> None:
+        report_dir = self.initialize()
+        report = report_dir / "PROJECT_INTELLIGENCE_REPORT.md"
+        local_path = str(self.checkout / "main.py")
+        report.write_text(f"# Report\n\n[local]({local_path})\n", encoding="utf-8")
+        completed = self.command(SAFETY, str(report_dir), "--target-checkout", str(self.checkout))
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("PROJECT_INTELLIGENCE_REPORT.md", completed.stderr)
+        self.assertIn(local_path, report.read_text(encoding="utf-8"))
+
     def test_publish_strictly_validates_finalizes_and_indexes(self) -> None:
         report_dir = self.initialize()
         ledger_path = report_dir / "candidate-ledger.json"
@@ -92,6 +104,21 @@ class ResearchSessionTests(unittest.TestCase):
         self.assertEqual(self.command(RUN, "advance", "--record", str(record), "--to", "candidates-frozen", "--artifact", f"candidate_ledger={ledger_path}").returncode, 0)
         self.assertEqual(self.command(RUN, "note", "--record", str(record), "--category", "tests", "--status", "passed", "--reason", "fixture tests").returncode, 0)
         self.assertEqual(self.command(RUN, "advance", "--record", str(record), "--to", "runtime-validated").returncode, 0)
+        recorded_stdout = report_dir / "logs" / "fixture.stdout.log"
+        recorded_stderr = report_dir / "logs" / "fixture.stderr.log"
+        recorded_stdout.parent.mkdir(exist_ok=True)
+        raw_stdout = f"checkout={self.checkout}\nhome={Path.home()}\n".encode()
+        raw_stderr = b""
+        recorded_stdout.write_bytes(raw_stdout)
+        recorded_stderr.write_bytes(raw_stderr)
+        run_record = json.loads(record.read_text(encoding="utf-8"))
+        run_record["entries"].append({
+            "kind": "command", "category": "fixture", "status": "passed", "argv": ["fixture"], "cwd": ".",
+            "started_at": "2026-09-01T00:00:00Z", "duration_ms": 1, "exit_code": 0, "timed_out": False,
+            "stdout_log": "logs/fixture.stdout.log", "stderr_log": "logs/fixture.stderr.log",
+            "output_sha256": hashlib.sha256(raw_stdout + b"\0" + raw_stderr).hexdigest(),
+        })
+        record.write_text(json.dumps(run_record, indent=2) + "\n", encoding="utf-8")
         comparator_path = report_dir / "comparator-ledger.json"
         comparator = json.loads(comparator_path.read_text(encoding="utf-8"))
         comparator["entries"] = [{
@@ -145,6 +172,14 @@ This fixture has evidence limitations.
         finalized = json.loads(record.read_text(encoding="utf-8"))
         index = json.loads((self.research / "runs.json").read_text(encoding="utf-8"))
         self.assertEqual(finalized["phase"], "finalized")
+        self.assertEqual(finalized["publication_redaction"]["status"], "applied")
+        self.assertTrue(finalized["entries"][-1]["output_redacted"])
+        self.assertIn("raw_output_sha256", finalized["entries"][-1])
+        redacted_log = recorded_stdout.read_text(encoding="utf-8")
+        self.assertNotIn(str(self.checkout), redacted_log)
+        self.assertNotIn(str(Path.home()), redacted_log)
+        self.assertIn("[TARGET_CHECKOUT]", redacted_log)
+        self.assertIn("[USER_HOME]", redacted_log)
         self.assertTrue((report_dir / "validation-receipt.json").is_file())
         self.assertEqual(index["generated_run_records"], 1)
         self.assertEqual(index["runs"][0]["id"], finalized["run_id"])
