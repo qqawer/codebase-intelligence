@@ -100,9 +100,11 @@ Use repository-relative source locations or immutable remote links; do not publi
 Before completion:
 
 1. write the report artifact
-2. validate it with `scripts/validate_report.py --write-receipt ...`
-3. advance the run through `report-validated`
-4. finalize the run record
-5. disclose or resolve material warnings
+2. generate target source citations with `scripts/source_link.py` when a local Git checkout is available
+3. validate it with `scripts/validate_report.py --write-receipt ...`
+4. advance the run through `report-validated`
+5. finalize the run record
+6. refresh a compatible research workspace index with `scripts/build_research_index.py --write`
+7. disclose or resolve material warnings
 
 The final chat response links the report and summarizes its verdict, strongest findings, validation status, and evidence limits. Focused questions may remain conversational.

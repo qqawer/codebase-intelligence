@@ -22,6 +22,23 @@ python3 scripts/research_run.py init \
 
 Do not place secrets, private source, raw conversations, or machine-specific checkout paths in arguments intended for publication.
 
+## Generate immutable source links
+
+For a local Git checkout, generate citations instead of manually assembling repository, revision, path, and line
+fragments:
+
+```bash
+python3 scripts/source_link.py \
+  --checkout <target-checkout> \
+  --path src/example.py \
+  --lines 10:24 \
+  --label "representative implementation"
+```
+
+The default `HEAD` mode refuses a dirty target file. Pass an explicit full or symbolic `--revision` to cite committed
+historical content independently of the current worktree. The generator supports GitHub HTTPS and SSH remotes and
+validates line bounds against the selected commit.
+
 ## Record commands
 
 Run only commands already authorized by the user's task. The recorder does not authorize commands and must not discover or execute project instructions automatically.
@@ -118,3 +135,13 @@ Required top-level fields:
 - `phase`, `phase_history`
 
 After finalization the record also contains `artifacts`, `verdict`, `completed_at`, and a granular `runtime_summary`. `runs.json` in a research workspace remains a compact cross-run index and should link to this sidecar rather than duplicating command evidence.
+
+If the research workspace uses the standard `runs.json` and README generated markers, refresh both after finalization:
+
+```bash
+python3 scripts/build_research_index.py <research-workspace> --write
+python3 scripts/build_research_index.py <research-workspace>
+```
+
+The first command merges finalized records while preserving legacy runs and non-canonical annotation fields. The
+second command fails when either generated output has drifted.

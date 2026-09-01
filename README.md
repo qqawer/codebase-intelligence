@@ -116,6 +116,11 @@ boolean. `research_run.py` records explicitly authorized commands or unavailable
 identity, immutable source links, line ranges, publication safety, evidence consistency, and protocol values. See
 [`references/run-record.md`](references/run-record.md) for the workflow.
 
+`source_link.py` generates report-ready GitHub citations from a local checkout, resolving the repository remote and
+revision, validating the file and line range against committed content, and encoding the path. `build_research_index.py`
+then derives finalized-run metadata from colocated records, updates `runs.json`, and regenerates the marked full-report
+table in a dedicated research workspace. Running the latter without `--write` is a drift check suitable for CI.
+
 Ranked findings use a structured `candidate-ledger.json`. `candidate_ledger.py` records coverage, representative traces,
 mechanism-level candidates, evidence, counterevidence, provenance, and runtime hypotheses; freezing writes a content
 hash and blocks later mutation. The run record enforces forward-only research phases so a report cannot finalize before
@@ -163,7 +168,9 @@ codebase-intelligence/
 ├── scripts/
 │   ├── repository_snapshot.py
 │   ├── candidate_ledger.py
+│   ├── build_research_index.py
 │   ├── research_run.py
+│   ├── source_link.py
 │   ├── validate_report.py
 │   └── test_*.py
 └── references/
