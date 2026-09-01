@@ -241,6 +241,17 @@ Stop deepening a candidate when:
 
 Do not confuse endless research with rigor.
 
+## 15. Record execution and validate the report
+
+For a full Project Intelligence Report, create a `run-record.json` sidecar before runtime validation. Record executed,
+unavailable, and intentionally skipped checks instead of collapsing partial validation into a boolean. Before delivery,
+run the report validator and resolve every error; review warnings against the evidence ceiling rather than deleting them
+mechanically.
+
+Read [references/run-record.md](references/run-record.md) for the schema and commands. These scripts record and validate
+already authorized work; they do not authorize commands, infer safe project instructions, or judge technical value and
+originality on the model's behalf.
+
 ## Supporting references
 
 Load references progressively instead of reading all of them by default:
@@ -254,6 +265,7 @@ Load references progressively instead of reading all of them by default:
   analysis.
 - Read `references/report-format.md` when producing or reviewing a full Project Intelligence Report; do not force the
   complete template onto a narrow question.
+- Read `references/run-record.md` when executing validation for or delivering a full Project Intelligence Report.
 
 ## Final output
 
@@ -278,6 +290,9 @@ artifact and summarize the verdict, strongest findings, evidence limits, and val
 the entire report. Keep repository identity, exact revision, analysis date, worktree state, source mode, and material
 evidence gaps inside the artifact. Avoid machine-specific absolute source paths in report content intended for
 publication; use repository-relative paths with line numbers or immutable remote links.
+
+Store `run-record.json` beside the report and preserve command logs under that report directory. A full report is not
+complete until `scripts/validate_report.py` reports no errors. Warnings must be disclosed or resolved when material.
 
 A focused repository question, preliminary candidate ledger, or interactive exploration may remain chat-only unless
 the user requests a file. Clearly label snapshots and intermediate ledgers so they cannot be mistaken for the final

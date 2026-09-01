@@ -12,6 +12,7 @@ Depending on the question and available evidence, Codebase Intelligence can prod
 
 - a bounded, machine-readable repository discovery snapshot
 - a persistent Markdown Project Intelligence Report for a full analysis
+- a machine-readable run record with granular passed, failed, unavailable, and skipped checks
 - a repository and runtime architecture map
 - representative end-to-end execution traces
 - ranked technical highlights at mechanism level
@@ -110,6 +111,11 @@ The script uses only the Python standard library. It records Git identity and wo
 discovery clusters such as manifests, likely entry points, tests, benchmarks, documentation, CI, and source boundaries.
 Its classifications are starting points for investigation, not architecture or quality conclusions.
 
+Full reports use a colocated `run-record.json` to preserve runtime evidence without reducing partial validation to a
+boolean. `research_run.py` records explicitly authorized commands or unavailable checks; `validate_report.py` checks
+identity, immutable source links, line ranges, publication safety, evidence consistency, and protocol values. See
+[`references/run-record.md`](references/run-record.md) for the workflow.
+
 ## Example finding shape
 
 A major finding is reported at mechanism level rather than as generic praise:
@@ -151,12 +157,15 @@ codebase-intelligence/
 │   └── openai.yaml
 ├── scripts/
 │   ├── repository_snapshot.py
-│   └── test_repository_snapshot.py
+│   ├── research_run.py
+│   ├── validate_report.py
+│   └── test_*.py
 └── references/
     ├── design-and-value.md
     ├── evidence-confidence.md
     ├── failure-modes.md
     ├── innovation.md
+    ├── run-record.md
     └── report-format.md
 ```
 
@@ -172,6 +181,7 @@ analyses, or conversation transcripts.
 - innovation for comparator-led originality investigation
 - failure modes for relevant corrections and final adversarial review
 - report format for full Project Intelligence Reports
+- run record for execution capture, report validation, and sidecar schema
 
 The repository snapshot script is executed only for local source discovery. Its implementation does not need to be
 loaded into model context during ordinary use.
@@ -195,10 +205,10 @@ python3 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py .
 The validator checks structure and metadata. Behavioral confidence comes from realistic repository analyses, not from
 schema validation alone.
 
-Smoke-test the bundled read-only inventory in both output formats:
+Run all deterministic script tests, then smoke-test the bundled read-only inventory in both output formats:
 
 ```bash
-python3 -m unittest scripts/test_repository_snapshot.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
 python3 scripts/repository_snapshot.py . --format markdown --max-items 5
 python3 scripts/repository_snapshot.py . --format json --max-items 5
 ```
