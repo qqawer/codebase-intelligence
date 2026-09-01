@@ -1,6 +1,6 @@
 ---
 name: codebase-intelligence
-description: Analyze substantial software repositories through execution tracing, adaptive depth, counterevidence, and comparator research. Use for evidence-backed architecture reports, technical-mechanism ranking, design-quality or learning-value assessment, and cautious originality or innovation evaluation. Do not use for narrow one-file questions or ordinary implementation and code-review tasks.
+description: Analyze substantial software repositories through execution tracing, adaptive depth, and counterevidence. Use for evidence-backed architecture reports, technical-mechanism ranking, design-quality or learning-value assessment, and cautious originality evaluation. Do not use for narrow one-file questions or ordinary implementation and code-review tasks.
 ---
 
 # Codebase Intelligence
@@ -32,16 +32,23 @@ python3 <skill-directory>/scripts/repository_snapshot.py <repository-path> --for
 
 Treat classifications as discovery hints, not architectural conclusions.
 
-## Research workflow
+## Choose the analysis mode
 
-Choose depth before starting. A generic “analyze/research this repository” request defaults to **standard**, not a
-full publication run:
+Use **Standard** for public, ordinary repository-analysis requests. “Analyze this repository,” “research this
+project,” “rank its strongest mechanisms,” and similar requests are Standard unless the user explicitly asks for the
+Full protocol or its audit artifacts.
 
-- **Focused:** one question or mechanism; bounded inventory, one or two traces, and only targeted checks.
-- **Standard (default):** architecture map, three to five mechanisms, counterevidence, and targeted runtime checks;
-  produce a report only when useful.
-- **Full:** persistent report, frozen ledgers, comparator coverage, and publication protocol. Use when the user asks
-  for a comprehensive/ranked/originality analysis, a publishable report, or equivalent depth.
+- **Focused:** answer one mechanism or execution-path question; use bounded discovery, one or two traces, and only
+  targeted checks. It may remain conversational.
+- **Standard (default):** produce an evidence-backed Markdown report with an architecture map, representative execution
+  paths, three to five ranked mechanisms, counterevidence, weaknesses, targeted runtime validation, and evidence limits.
+- **Full (advanced opt-in):** add frozen candidate/comparator ledgers, command sidecars, receipts, and indexed research
+  publication. Never infer Full from a generic request, “comprehensive,” ranking, or originality interest alone. Enter
+  it only when the user explicitly asks for Full/auditable/reproducible protocol or names its audit artifacts.
+
+A Standard originality question may use bounded authoritative comparators without creating ledgers. If stronger
+historical or exhaustive support would require Full, state the current evidence ceiling and offer Full rather than
+silently escalating.
 
 Do not run a large repository's complete test suite merely because it exists. Inspect CI and manifests first, run the
 smallest checks capable of changing the conclusion, and add one representative end-to-end path when practical. Use a
@@ -59,10 +66,7 @@ For substantial analysis:
 7. Run a final recall challenge for hidden mechanisms, benchmarks, user-visible behavior, and high-learning-value upstream techniques.
 8. Stop when additional work cannot change the conclusion under the evidence ceiling.
 
-For full reports, ranked findings, blind validation, or originality analysis, use the structured candidate ledger and freeze it before project-public explanations or external comparator review can rewrite preliminary discovery. Read [references/candidate-ledger.md](references/candidate-ledger.md).
-
-After candidate freeze, full reports use a structured comparator ledger for Tier 3+ coverage, explicit exclusions,
-source identity limits, and calibrated originality effects. Read [references/comparator-ledger.md](references/comparator-ledger.md).
+For explicitly selected Full mode, read [references/full-mode.md](references/full-mode.md) before using its protocol.
 
 ## Evidence and outcome discipline
 
@@ -76,57 +80,34 @@ Treat repeated source citations as one evidence channel. Separate originality fr
 
 ## Automation boundary
 
-Scripts fix identity, phase order, candidate freeze, command evidence, source-link invariants, and publication safety. `research_session.py publish` redacts machine-local paths from publication artifacts, preserves pre-redaction output hashes, recomputes published hashes, and refuses residual known local-root patterns before validation. Scripts do not authorize commands or decide architecture, importance, comparators, technical value, originality, or when evidence is semantically sufficient.
+Use `repository_snapshot.py` for bounded local discovery and `source_link.py` for immutable citations when helpful.
+Standard mode does not create ledgers, receipts, run indexes, or invoke `research_session.py`.
 
-For a new full report from a clean local checkout, prefer `research_session.py init`, use its `status` command while
-working, and use `publish` only after synthesis. The orchestrator preserves the same forward-only phases enforced by
-`research_run.py`:
-
-```text
-initialized -> inventoried -> candidates-frozen -> runtime-validated
--> comparators-reviewed -> synthesized -> report-validated -> finalized
-```
-
-Read [references/run-record.md](references/run-record.md) before executing validation. Record executed, unavailable, externally observed, and intentionally skipped checks instead of reducing partial validation to a boolean. Historical migrations may use the explicit retrospective path; new runs must not use it to bypass gates.
+Advanced scripts fix Full-mode identity, phase order, evidence sidecars, source-link invariants, and publication safety.
+They do not authorize commands or decide architecture, importance, technical value, originality, or whether evidence is
+semantically sufficient.
 
 ## Load supporting guidance only when needed
 
 - Source mode, evidence combinations, confidence, or evidence ceilings: [references/evidence-confidence.md](references/evidence-confidence.md)
 - Tier 3+ design quality, leverage, abstractions, and technical-value ranking: [references/design-and-value.md](references/design-and-value.md)
 - Originality, innovation, or comparator claims: [references/innovation.md](references/innovation.md)
-- Full report structure or review: [references/report-format.md](references/report-format.md)
-- Full-report execution records and phase gates: [references/run-record.md](references/run-record.md)
-- Ranked/frozen candidate workflow: [references/candidate-ledger.md](references/candidate-ledger.md)
-- Comparator coverage and originality evidence: [references/comparator-ledger.md](references/comparator-ledger.md)
+- Standard report structure or review: [references/standard-report.md](references/standard-report.md)
+- Explicitly selected Full protocol: [references/full-mode.md](references/full-mode.md)
 - A relevant known failure pattern or final full-report adversarial check: [references/failure-modes.md](references/failure-modes.md)
 
 Do not load every reference by default.
 
-## Delivery
+## Standard delivery
 
-A full Project Intelligence Report requires a persistent Markdown artifact in the user's chosen or existing research workspace, never silently in the analyzed repository or Skill directory. Prefer:
+For a substantial Standard analysis, write `PROJECT_INTELLIGENCE_REPORT.md` to the user's chosen or existing research
+workspace, never silently into the analyzed repository or Skill directory. If no persistent destination is established,
+ask before writing outside the current workspace; still provide the concise findings in chat.
 
-```text
-<report-workspace>/reports/<owner>-<repository>/<short-revision>/
-├── PROJECT_INTELLIGENCE_REPORT.md
-├── candidate-ledger.json
-├── candidate-ledger.md
-├── comparator-ledger.json
-├── comparator-ledger.md
-├── run-record.json
-└── validation-receipt.json
-```
+Use repository-relative source locations or immutable remote links. Do not publish machine-specific paths,
+credentials, private source, or raw conversations. Keep the report insight-dense: identity and evidence limits,
+architecture, representative execution, three to five ranked mechanisms, counterevidence and weaknesses, targeted
+runtime results, learning targets, and a calibrated verdict. It does not need Full-mode ledgers or receipts.
 
-Use repository-relative source locations or immutable remote links; do not publish machine-specific paths, credentials, private source, or raw conversations. The report should explain the system, architecture, representative execution, strongest mechanisms, value, provenance, conventional versus distinctive work, weaknesses, learning targets, evidence, coverage, and uncertainty in proportion to available evidence.
-
-Before completion:
-
-1. write the report artifact
-2. generate target source citations with `scripts/source_link.py` when a local Git checkout is available
-3. validate it with `scripts/validate_report.py --write-receipt ...`
-4. advance the run through `report-validated`
-5. finalize the run record
-6. refresh a compatible research workspace index with `scripts/build_research_index.py --write`
-7. disclose or resolve material warnings
-
-The final chat response links the report and summarizes its verdict, strongest findings, validation status, and evidence limits. Focused questions may remain conversational.
+The final chat response links the report and summarizes its verdict, strongest findings, validation status, and
+evidence limits. Focused questions may remain conversational.

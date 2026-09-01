@@ -8,26 +8,28 @@ from originality and plausible innovation.
 
 ## What it produces
 
-Depending on the question and available evidence, Codebase Intelligence can produce:
+The default Standard analysis produces:
 
 - a bounded, machine-readable repository discovery snapshot
-- a persistent Markdown Project Intelligence Report for a full analysis
-- a machine-readable run record with granular passed, failed, unavailable, and skipped checks
+- a persistent, insight-dense Markdown Project Intelligence Report
 - a repository and runtime architecture map
-- representative end-to-end execution traces
-- ranked technical highlights at mechanism level
+- two or three representative end-to-end execution traces
+- three to five ranked technical highlights at mechanism level
 - design-quality and technical-value analysis
 - conventional versus distinctive implementation classification
-- upstream, precedent, and inspiration attribution
 - counterevidence, confidence, and source limitations
 - weaknesses, trade-offs, and recommended learning targets
 
-The default is an insight-dense report shaped by the repository—not a fixed inventory of every directory.
+When needed, it also uses bounded upstream or peer comparison to calibrate originality. The default is shaped by the
+repository—not a fixed inventory of every directory and not an exhaustive audit.
 
-For a full analysis, the report is written to a dedicated Markdown artifact before completion. The final chat response
-links that file and gives a concise verdict. Focused questions may remain conversational. Generated reports belong in a
-user-selected or dedicated research workspace, not in this installable Skill or the analyzed repository unless that
-location is explicitly requested.
+For a substantial Standard analysis, the report is written to a dedicated Markdown artifact before completion. The
+final chat response links that file and gives a concise verdict. Focused questions may remain conversational.
+Generated reports belong in a user-selected or dedicated research workspace, not in this installable Skill or the
+analyzed repository unless that location is explicitly requested.
+
+An advanced Full mode is also available for users who explicitly need frozen ledgers, command evidence, validation
+receipts, and indexed, auditable publication. It is not the default workflow.
 
 ## Why it is different
 
@@ -100,7 +102,19 @@ Tell me what an experienced engineer should study in this codebase, with evidenc
 The skill supports normal implicit discovery when a request clearly calls for deep repository understanding. It is
 currently Codex-first; compatibility with other agent harnesses has not been validated.
 
-For a compact read-only inventory without running the full analysis:
+## Analysis modes
+
+| Mode | When it applies | Typical output |
+|---|---|---|
+| Focused | One mechanism or execution-path question | Concise answer, one or two traces, targeted evidence |
+| Standard | Default for repository analysis, research, ranking, and bounded originality questions | Markdown report, architecture, 3–5 mechanisms, targeted runtime checks |
+| Full | Explicit request for Full/auditable/reproducible protocol or its artifacts | Standard report plus ledgers, command sidecars, receipt, and research index |
+
+Words such as “comprehensive” or “rank” do not silently activate Full. Full is an evidence-publication protocol, not a
+promise to run every test or inspect every file; runtime validation remains selective unless exhaustive testing is
+explicitly justified.
+
+For a compact read-only inventory without running a Standard analysis:
 
 ```bash
 python3 scripts/repository_snapshot.py /path/to/repository --format markdown
@@ -111,36 +125,16 @@ The script uses only the Python standard library. It records Git identity and wo
 discovery clusters such as manifests, likely entry points, tests, benchmarks, documentation, CI, and source boundaries.
 Its classifications are starting points for investigation, not architecture or quality conclusions.
 
-Full reports use a colocated `run-record.json` to preserve runtime evidence without reducing partial validation to a
-boolean. `research_run.py` records explicitly authorized commands or unavailable checks; `validate_report.py` checks
-identity, immutable source links, line ranges, publication safety, evidence consistency, and protocol values. See
-[`references/run-record.md`](references/run-record.md) for the workflow.
+`source_link.py` generates report-ready immutable GitHub citations from a local checkout. Standard reports may use it
+without adopting any Full-mode sidecars.
 
-Analysis depth is adaptive. A normal repository-research request uses a standard architecture pass with targeted
-runtime checks; the frozen-ledger, comparator, full-suite, and publication workflow is reserved for comprehensive,
-ranked, originality-focused, or explicitly publishable work. This keeps routine analysis from paying the latency cost
-of the full research protocol.
+### Advanced auditable mode
 
-For a new clean local checkout, `research_session.py` orchestrates the mechanical boundaries without automating the
-analysis itself: `init` fixes identity and creates the standard session at the inventoried phase, `status` reports the
-next legal phase and gate blockers, and `publish` redacts machine-local paths, preserves raw and publication-safe
-output hashes, then strictly validates, finalizes, and indexes an already synthesized report. It never selects
-technical highlights, runs target commands, commits, or pushes. `publication_safety.py` exposes the same deterministic
-sanitizer for custom publication workflows.
-
-`source_link.py` generates report-ready GitHub citations from a local checkout, resolving the repository remote and
-revision, validating the file and line range against committed content, and encoding the path. `build_research_index.py`
-then derives finalized-run metadata from colocated records, updates `runs.json`, and regenerates the marked full-report
-table in a dedicated research workspace. Running the latter without `--write` is a drift check suitable for CI.
-
-Ranked findings use a structured `candidate-ledger.json`. `candidate_ledger.py` records coverage, representative traces,
-mechanism-level candidates, evidence, counterevidence, provenance, and runtime hypotheses; freezing writes a content
-hash and blocks later mutation. The run record enforces forward-only research phases so a report cannot finalize before
-inventory, candidate freeze, validation, comparator review, synthesis, and report validation are accounted for.
-
-Comparator research uses a separate `comparator-ledger.json`. `comparator_ledger.py` requires every Tier 3+ candidate
-to have comparison coverage or an explicit exclusion, preserves source identity limits and access dates, records the
-material difference and strongest originality counterevidence, and freezes the result before synthesis.
+Full mode remains public and installable, but is explicitly opt-in. It adds frozen candidate/comparator ledgers,
+granular command results, publication safety, strict report validation, a receipt, and research index generation.
+`research_session.py` orchestrates those mechanical boundaries without choosing findings, running target commands,
+committing, or pushing. See [`references/full-mode.md`](references/full-mode.md) for activation rules and
+[`references/run-record.md`](references/run-record.md) for the detailed protocol.
 
 ## Example finding shape
 
@@ -167,6 +161,7 @@ The current main branch is a post-v0.2 release candidate. The methodology and Sk
   innovation promotion
 - a behavior-validated GJSON analysis with the project test suite, focused lifecycle and numeric tests, allocation
   benchmarks, and the Go race detector
+- a Caddy Full-mode report that exposed and then drove automation for publication-path redaction and evidence rehashing
 
 These runs support the method's cross-project usefulness; they do not prove exhaustive recall or performance across all
 repository types. Full research artifacts and conversation archives are intentionally maintained outside this Skill
@@ -200,6 +195,8 @@ codebase-intelligence/
     ├── failure-modes.md
     ├── innovation.md
     ├── run-record.md
+    ├── standard-report.md
+    ├── full-mode.md
     └── report-format.md
 ```
 
@@ -214,8 +211,8 @@ analyses, or conversation transcripts.
 - design and value for deeper design-quality and technical-value analysis
 - innovation for comparator-led originality investigation
 - failure modes for relevant corrections and final adversarial review
-- report format for full Project Intelligence Reports
-- run record for execution capture, report validation, and sidecar schema
+- standard report for the default public output
+- full mode, report format, and run record only for explicitly selected auditable publication
 
 The repository snapshot script is executed only for local source discovery. Its implementation does not need to be
 loaded into model context during ordinary use.
