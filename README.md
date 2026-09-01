@@ -116,6 +116,11 @@ boolean. `research_run.py` records explicitly authorized commands or unavailable
 identity, immutable source links, line ranges, publication safety, evidence consistency, and protocol values. See
 [`references/run-record.md`](references/run-record.md) for the workflow.
 
+For a new clean local checkout, `research_session.py` orchestrates the mechanical boundaries without automating the
+analysis itself: `init` fixes identity and creates the standard session at the inventoried phase, `status` reports the
+next legal phase and gate blockers, and `publish` strictly validates, finalizes, and indexes an already synthesized
+report. It never selects technical highlights, runs target commands, commits, or pushes.
+
 `source_link.py` generates report-ready GitHub citations from a local checkout, resolving the repository remote and
 revision, validating the file and line range against committed content, and encoding the path. `build_research_index.py`
 then derives finalized-run metadata from colocated records, updates `runs.json`, and regenerates the marked full-report
@@ -169,6 +174,7 @@ codebase-intelligence/
 │   ├── repository_snapshot.py
 │   ├── candidate_ledger.py
 │   ├── build_research_index.py
+│   ├── research_session.py
 │   ├── research_run.py
 │   ├── source_link.py
 │   ├── validate_report.py

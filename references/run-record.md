@@ -4,6 +4,43 @@ Read this reference when creating a full report, executing runtime validation, o
 
 `run-record.json` is the machine-readable evidence sidecar for one report. Markdown remains the human-readable analysis; the sidecar records identities, commands, unavailable checks, artifacts, and the protocol verdict without requiring a rigid report heading template.
 
+## Orchestrate a new local session
+
+For a clean local Git checkout, initialize the standard directory, repository snapshot, run record, and candidate
+ledger together:
+
+```bash
+python3 scripts/research_session.py init \
+  --checkout <target-checkout> \
+  --research-root <research-workspace>
+```
+
+The command resolves and records the remote, full commit, shallow/full state, clean worktree, and current Skill
+identity. It creates `reports/<owner>-<repository>/<short-revision>/` in a temporary staging directory and publishes it
+only after initialization and inventory succeed. It finishes in `inventoried`; it does not run target commands, choose
+candidates, or create report conclusions.
+
+At any point, inspect the next legal phase and its current gate failures:
+
+```bash
+python3 scripts/research_session.py status <report-directory>
+```
+
+After the candidate ledger is frozen, runtime evidence and comparator review are recorded, the report exists, and the
+run has advanced to `synthesized`, publish it with an explicit protocol verdict:
+
+```bash
+python3 scripts/research_session.py publish <report-directory> \
+  --research-root <research-workspace> \
+  --target-checkout <target-checkout> \
+  --verdict "PASS WITH EVIDENCE LIMITATIONS"
+```
+
+`publish` performs strict report validation, writes the report-bound receipt, advances and finalizes the record,
+regenerates the workspace index, validates index consistency, and runs a workspace validator when one is present. It
+does not commit or push Git changes. A validation warning stops publication. Use the lower-level commands below for
+remote-only evidence, historical migration, or workflows that do not fit the standard local layout.
+
 ## Create the record
 
 Resolve scripts relative to the Skill directory.

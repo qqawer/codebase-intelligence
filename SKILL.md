@@ -61,7 +61,9 @@ Treat repeated source citations as one evidence channel. Separate originality fr
 
 Scripts fix identity, phase order, candidate freeze, command evidence, source-link invariants, and publication safety. They do not authorize commands or decide architecture, importance, comparators, technical value, originality, or when evidence is semantically sufficient.
 
-For a full report, use `research_run.py` from initialization through the forward-only phases:
+For a new full report from a clean local checkout, prefer `research_session.py init`, use its `status` command while
+working, and use `publish` only after synthesis. The orchestrator preserves the same forward-only phases enforced by
+`research_run.py`:
 
 ```text
 initialized -> inventoried -> candidates-frozen -> runtime-validated
