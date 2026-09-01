@@ -36,7 +36,7 @@ class ValidateReportTests(unittest.TestCase):
 
     def write_record(self, **changes: object) -> None:
         value = {
-            "schema_version": 1,
+            "schema_version": 2,
             "run_id": "fixture",
             "run_class": "behavior-validated-blind",
             "analysis_date": "2026-09-01",
@@ -44,6 +44,8 @@ class ValidateReportTests(unittest.TestCase):
             "target": {"repository": "https://github.com/example/project.git", "revision": self.revision, "worktree_state": "clean"},
             "skill": {"revision": "b" * 40},
             "entries": [{"kind": "command", "category": "test", "status": "passed"}],
+            "phase": "synthesized",
+            "phase_history": [{"phase": "initialized"}, {"phase": "synthesized"}],
             "verdict": "PASS",
         }
         value.update(changes)

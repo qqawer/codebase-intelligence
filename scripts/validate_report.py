@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote
@@ -67,8 +69,15 @@ def validate_record(record: dict[str, Any], findings: list[Finding]) -> None:
     for key in required:
         if key not in record:
             findings.append(Finding("error", "record-field", f"run record is missing '{key}'"))
-    if record.get("schema_version") != 1:
+    if record.get("schema_version") not in {1, 2}:
         findings.append(Finding("error", "record-schema", "unsupported run record schema_version"))
+    elif record.get("schema_version") == 1:
+        findings.append(Finding("warning", "legacy-record", "run record uses legacy schema version 1 without phase gates"))
+    if record.get("schema_version") == 2:
+        if record.get("phase") not in {"synthesized", "report-validated", "finalized"}:
+            findings.append(Finding("error", "record-phase", "report validation requires synthesized or later phase"))
+        if not isinstance(record.get("phase_history"), list):
+            findings.append(Finding("error", "phase-history", "schema version 2 requires phase_history"))
     if record.get("source_mode") not in SOURCE_MODES:
         findings.append(Finding("error", "source-mode", f"unsupported source mode: {record.get('source_mode')!r}"))
     if "verdict" in record and record["verdict"] not in VERDICTS:
@@ -155,6 +164,18 @@ def validate_ledger(path: Path | None, record: dict[str, Any], findings: list[Fi
         findings.append(Finding("error", "ledger-required", "blind run requires a candidate ledger"))
     if path is not None and not path.is_file():
         findings.append(Finding("error", "ledger-missing", f"candidate ledger does not exist: {path}"))
+    elif path is not None and path.suffix.lower() == ".json":
+        try:
+            from candidate_ledger import load as load_ledger, validate as validate_candidate_ledger
+            errors = validate_candidate_ledger(load_ledger(path), require_frozen=True)
+        except (ImportError, SystemExit) as error:
+            findings.append(Finding("error", "ledger-json", f"candidate ledger could not be validated: {error}"))
+        else:
+            for error in errors:
+                findings.append(Finding("error", "ledger-json", error))
+            ledger = load_ledger(path)
+            if ledger.get("target", {}).get("revision") != record.get("target", {}).get("revision"):
+                findings.append(Finding("error", "ledger-revision", "candidate ledger revision does not match run record"))
 
 
 def validate_index(path: Path | None, record: dict[str, Any], findings: list[Finding]) -> None:
@@ -188,6 +209,19 @@ def render(findings: list[Finding], output_format: str) -> None:
         print(f"- {item.severity.upper()} [{item.code}] {item.message}")
 
 
+def write_receipt(path: Path, report: Path, findings: list[Finding]) -> None:
+    value = {
+        "schema_version": 1,
+        "validated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "report": report.name,
+        "report_sha256": hashlib.sha256(report.read_bytes()).hexdigest() if report.is_file() else None,
+        "errors": sum(item.severity == "error" for item in findings),
+        "warnings": sum(item.severity == "warning" for item in findings),
+        "finding_codes": [item.code for item in findings],
+    }
+    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("report", type=Path)
@@ -197,6 +231,7 @@ def main() -> int:
     parser.add_argument("--run-index", type=Path)
     parser.add_argument("--format", choices=("text", "json"), default="text")
     parser.add_argument("--strict", action="store_true", help="return nonzero for warnings")
+    parser.add_argument("--write-receipt", type=Path)
     args = parser.parse_args()
 
     findings: list[Finding] = []
@@ -217,6 +252,9 @@ def main() -> int:
         validate_ledger(args.candidate_ledger, record, findings)
         validate_index(args.run_index, record, findings)
     render(findings, args.format)
+    if args.write_receipt:
+        args.write_receipt.parent.mkdir(parents=True, exist_ok=True)
+        write_receipt(args.write_receipt, args.report, findings)
     errors = any(item.severity == "error" for item in findings)
     warnings = any(item.severity == "warning" for item in findings)
     return 1 if errors or (args.strict and warnings) else 0

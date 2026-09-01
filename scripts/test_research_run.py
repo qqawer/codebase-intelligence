@@ -90,13 +90,57 @@ class ResearchRunTests(unittest.TestCase):
             [sys.executable, str(SCRIPT), "note", "--record", str(self.record), "--category", "rust-tests", "--status", "unavailable", "--reason", "cargo missing"],
             check=True,
         )
-        subprocess.run(
-            [sys.executable, str(SCRIPT), "finalize", "--record", str(self.record), "--report", "PROJECT_INTELLIGENCE_REPORT.md", "--candidate-ledger", "candidate-ledger.md", "--verdict", "PASS WITH EVIDENCE LIMITATIONS"],
-            check=True,
-        )
+        for phase in ("inventoried", "candidates-frozen", "runtime-validated", "comparators-reviewed", "synthesized", "report-validated"):
+            subprocess.run(
+                [sys.executable, str(SCRIPT), "advance", "--record", str(self.record), "--to", phase, "--retrospective", "--reason", "fixture migration"],
+                check=True,
+                capture_output=True,
+            )
+        subprocess.run([sys.executable, str(SCRIPT), "finalize", "--record", str(self.record), "--report", "PROJECT_INTELLIGENCE_REPORT.md", "--candidate-ledger", "candidate-ledger.json", "--verdict", "PASS WITH EVIDENCE LIMITATIONS"], check=True)
         value = self.load()
         self.assertEqual(value["runtime_summary"]["counts"]["unavailable"], 1)
         self.assertFalse(value["runtime_summary"]["end_to_end"])
+        self.assertEqual(value["phase"], "finalized")
+        self.assertTrue(any(item.get("bypassed_gates") for item in value["phase_history"]))
+
+    def test_phase_transitions_are_sequential_and_gated(self) -> None:
+        skipped = subprocess.run(
+            [sys.executable, str(SCRIPT), "advance", "--record", str(self.record), "--to", "candidates-frozen"],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        self.assertNotEqual(skipped.returncode, 0)
+        self.assertIn("sequential", skipped.stderr)
+        missing = subprocess.run(
+            [sys.executable, str(SCRIPT), "advance", "--record", str(self.record), "--to", "inventoried"],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        self.assertNotEqual(missing.returncode, 0)
+        self.assertIn("repository_snapshot", missing.stderr)
+
+    def test_validation_receipt_must_match_current_report(self) -> None:
+        subprocess.run([sys.executable, str(SCRIPT), "note", "--record", str(self.record), "--category", "test", "--status", "not-run", "--reason", "fixture"], check=True)
+        for phase in ("inventoried", "candidates-frozen"):
+            subprocess.run([sys.executable, str(SCRIPT), "advance", "--record", str(self.record), "--to", phase, "--retrospective", "--reason", "fixture"], check=True, capture_output=True)
+        subprocess.run([sys.executable, str(SCRIPT), "advance", "--record", str(self.record), "--to", "runtime-validated"], check=True)
+        subprocess.run([sys.executable, str(SCRIPT), "note", "--record", str(self.record), "--category", "comparator-review", "--status", "not-run", "--reason", "not requested"], check=True)
+        subprocess.run([sys.executable, str(SCRIPT), "advance", "--record", str(self.record), "--to", "comparators-reviewed"], check=True)
+        report = self.root / "PROJECT_INTELLIGENCE_REPORT.md"
+        report.write_text("# Report\n", encoding="utf-8")
+        subprocess.run([sys.executable, str(SCRIPT), "advance", "--record", str(self.record), "--to", "synthesized", "--artifact", f"report={report}"], check=True)
+        receipt = self.root / "validation-receipt.json"
+        receipt.write_text(json.dumps({"errors": 0, "report_sha256": "0" * 64}), encoding="utf-8")
+        completed = subprocess.run(
+            [sys.executable, str(SCRIPT), "advance", "--record", str(self.record), "--to", "report-validated", "--artifact", f"validation_receipt={receipt}"],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("does not match", completed.stderr)
 
 
 if __name__ == "__main__":

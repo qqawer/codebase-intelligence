@@ -50,25 +50,60 @@ python3 scripts/research_run.py note \
 
 Use `--evidence-origin retrospective-migration` when preserving a result from an earlier run whose exact command timestamps or logs were not captured. Do not reconstruct details that were not observed.
 
-## Finalize and validate
+## Advance, validate, and finalize
+
+Advance exactly one phase at a time. The examples below assume the immediately preceding phases have already passed;
+supply the artifact required by each next gate:
 
 ```bash
-python3 scripts/research_run.py finalize \
+python3 scripts/research_run.py advance \
   --record <report-directory>/run-record.json \
-  --report PROJECT_INTELLIGENCE_REPORT.md \
-  --candidate-ledger candidate-ledger.md \
-  --verdict "PASS WITH EVIDENCE LIMITATIONS"
+  --to candidates-frozen \
+  --artifact candidate_ledger=<report-directory>/candidate-ledger.json
+
+python3 scripts/research_run.py advance \
+  --record <report-directory>/run-record.json \
+  --to synthesized \
+  --artifact report=<report-directory>/PROJECT_INTELLIGENCE_REPORT.md
 
 python3 scripts/validate_report.py \
   <report-directory>/PROJECT_INTELLIGENCE_REPORT.md \
   --run-record <report-directory>/run-record.json \
-  --candidate-ledger <report-directory>/candidate-ledger.md \
-  --target-checkout <target-checkout>
+  --candidate-ledger <report-directory>/candidate-ledger.json \
+  --target-checkout <target-checkout> \
+  --write-receipt <report-directory>/validation-receipt.json
+
+python3 scripts/research_run.py advance \
+  --record <report-directory>/run-record.json \
+  --to report-validated \
+  --artifact validation_receipt=<report-directory>/validation-receipt.json
+
+python3 scripts/research_run.py finalize \
+  --record <report-directory>/run-record.json \
+  --report PROJECT_INTELLIGENCE_REPORT.md \
+  --candidate-ledger candidate-ledger.json \
+  --verdict "PASS WITH EVIDENCE LIMITATIONS"
 ```
 
 Validation errors are violated reproducibility or publication invariants. Warnings identify missing evidence or review prompts. Use `--strict` in CI when warnings should fail the check.
 
-## Schema version 1
+## Research phases
+
+Schema version 2 records a forward-only state machine:
+
+```text
+initialized -> inventoried -> candidates-frozen -> runtime-validated
+-> comparators-reviewed -> synthesized -> report-validated -> finalized
+```
+
+Advance one phase at a time with `research_run.py advance`. Each transition checks its required artifact or evidence.
+For historical reports only, `--retrospective --reason <why>` permits a missing historical artifact while preserving
+the bypass in `phase_history`; never use it to bypass a gate in a new run.
+
+`validate_report.py --write-receipt validation-receipt.json` creates a receipt bound to the current report SHA-256.
+The `report-validated` gate rejects receipts with errors or a stale report hash.
+
+## Schema version 2
 
 Required top-level fields:
 
@@ -80,5 +115,6 @@ Required top-level fields:
 - `target.repository`, `target.revision`, `target.worktree_state`
 - `skill.revision`
 - `entries`
+- `phase`, `phase_history`
 
 After finalization the record also contains `artifacts`, `verdict`, `completed_at`, and a granular `runtime_summary`. `runs.json` in a research workspace remains a compact cross-run index and should link to this sidecar rather than duplicating command evidence.

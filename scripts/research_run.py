@@ -19,7 +19,7 @@ from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 STATUSES = {"passed", "failed", "unavailable", "not-run", "blocked", "observed", "in-progress"}
 VERDICTS = {
     "PASS",
@@ -29,6 +29,16 @@ VERDICTS = {
     "FAIL",
 }
 SENSITIVE_OPTION = re.compile(r"(?i)^--?(?:api[-_]?key|token|password|passwd|secret|credential)(?:=|$)")
+PHASES = [
+    "initialized",
+    "inventoried",
+    "candidates-frozen",
+    "runtime-validated",
+    "comparators-reviewed",
+    "synthesized",
+    "report-validated",
+    "finalized",
+]
 
 
 def utc_now() -> str:
@@ -132,6 +142,8 @@ def cmd_init(args: argparse.Namespace) -> int:
         },
         "entries": [],
         "artifacts": {},
+        "phase": "initialized",
+        "phase_history": [{"phase": "initialized", "recorded_at": utc_now(), "evidence_origin": "contemporaneous"}],
     }
     atomic_write(args.output, value)
     print(args.output)
@@ -228,10 +240,115 @@ def runtime_summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
     return {"counts": counts, "end_to_end": any(entry.get("category") == "end-to-end" and entry.get("status") == "passed" for entry in entries)}
 
 
+def parse_artifacts(values: list[str]) -> dict[str, Path]:
+    artifacts: dict[str, Path] = {}
+    for value in values:
+        if "=" not in value:
+            raise SystemExit(f"artifact must use key=path syntax: {value}")
+        key, raw_path = value.split("=", 1)
+        if not key or not raw_path:
+            raise SystemExit(f"artifact must use key=path syntax: {value}")
+        artifacts[key] = Path(raw_path)
+    return artifacts
+
+
+def gate_phase(record: dict[str, Any], record_path: Path, next_phase: str, supplied: dict[str, Path]) -> list[str]:
+    errors: list[str] = []
+    artifacts = record.get("artifacts", {})
+    if next_phase == "inventoried" and "repository_snapshot" not in supplied and "repository_snapshot" not in artifacts:
+        errors.append("inventoried requires repository_snapshot")
+    elif next_phase == "candidates-frozen":
+        path = supplied.get("candidate_ledger")
+        if path is None:
+            errors.append("candidates-frozen requires candidate_ledger")
+        elif not path.is_file():
+            errors.append(f"candidate ledger does not exist: {path}")
+        else:
+            try:
+                from candidate_ledger import load as load_ledger, validate as validate_ledger
+                ledger = load_ledger(path)
+                errors.extend(f"candidate ledger: {error}" for error in validate_ledger(ledger, require_frozen=True))
+                if ledger.get("target", {}).get("revision") != record.get("target", {}).get("revision"):
+                    errors.append("candidate ledger target revision does not match run record")
+            except (ImportError, SystemExit) as error:
+                errors.append(f"candidate ledger could not be validated: {error}")
+    elif next_phase == "runtime-validated":
+        entries = record.get("entries", [])
+        if not entries:
+            errors.append("runtime-validated requires executed, unavailable, or intentionally skipped entries")
+        if any(entry.get("status") == "in-progress" for entry in entries):
+            errors.append("runtime-validated cannot contain in-progress entries")
+    elif next_phase == "comparators-reviewed":
+        reviewed = any(entry.get("category") == "comparator-review" for entry in record.get("entries", []))
+        if not reviewed and "comparator_ledger" not in supplied and "comparator_ledger" not in artifacts:
+            errors.append("comparators-reviewed requires a comparator-review entry or comparator_ledger")
+    elif next_phase == "synthesized":
+        path = supplied.get("report")
+        if path is None or not path.is_file():
+            errors.append("synthesized requires an existing report artifact")
+    elif next_phase == "report-validated":
+        path = supplied.get("validation_receipt")
+        if path is None or not path.is_file():
+            errors.append("report-validated requires an existing validation_receipt")
+        else:
+            try:
+                receipt = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as error:
+                errors.append(f"validation receipt is invalid: {error}")
+            else:
+                if receipt.get("errors") != 0:
+                    errors.append("validation receipt contains errors")
+                report_name = record.get("artifacts", {}).get("report")
+                report_path = record_path_for_artifact(record_path.parent, report_name) if report_name else None
+                if report_path and report_path.is_file():
+                    actual_hash = hashlib.sha256(report_path.read_bytes()).hexdigest()
+                    if receipt.get("report_sha256") != actual_hash:
+                        errors.append("validation receipt does not match the current report")
+    return errors
+
+
+def record_path_for_artifact(root: Path, value: str | None) -> Path:
+    return root / value if value else root
+
+
+def cmd_advance(args: argparse.Namespace) -> int:
+    record = read_record(args.record)
+    current = record.get("phase")
+    if current not in PHASES:
+        raise SystemExit(f"record has unsupported phase: {current!r}")
+    current_index = PHASES.index(current)
+    if current_index + 1 >= len(PHASES) or PHASES[current_index + 1] != args.to:
+        expected = PHASES[current_index + 1] if current_index + 1 < len(PHASES) else "none"
+        raise SystemExit(f"phase transition must be sequential: {current} -> {expected}")
+    supplied = parse_artifacts(args.artifact)
+    errors = gate_phase(record, args.record, args.to, supplied)
+    if errors and not args.retrospective:
+        raise SystemExit("phase gate failed:\n- " + "\n- ".join(errors))
+    if args.retrospective and not args.reason:
+        raise SystemExit("retrospective transition requires --reason")
+    for key, path in supplied.items():
+        record.setdefault("artifacts", {})[key] = relative_artifact(args.record, path)
+    history = {
+        "phase": args.to,
+        "recorded_at": utc_now(),
+        "evidence_origin": "retrospective-migration" if args.retrospective else "contemporaneous",
+    }
+    if args.reason:
+        history["reason"] = args.reason
+    if errors:
+        history["bypassed_gates"] = errors
+    record["phase"] = args.to
+    record.setdefault("phase_history", []).append(history)
+    atomic_write(args.record, record)
+    return 0
+
+
 def cmd_finalize(args: argparse.Namespace) -> int:
     if args.verdict not in VERDICTS:
         raise SystemExit(f"unsupported verdict: {args.verdict}")
     record = read_record(args.record)
+    if record.get("phase") != "report-validated":
+        raise SystemExit("finalize requires phase report-validated")
     artifacts = record.setdefault("artifacts", {})
     artifacts["report"] = args.report
     if args.candidate_ledger:
@@ -239,6 +356,8 @@ def cmd_finalize(args: argparse.Namespace) -> int:
     record["verdict"] = args.verdict
     record["completed_at"] = utc_now()
     record["runtime_summary"] = runtime_summary(record.get("entries", []))
+    record["phase"] = "finalized"
+    record.setdefault("phase_history", []).append({"phase": "finalized", "recorded_at": utc_now(), "evidence_origin": "contemporaneous"})
     atomic_write(args.record, record)
     return 0
 
@@ -279,6 +398,14 @@ def build_parser() -> argparse.ArgumentParser:
     note.add_argument("--summary")
     note.add_argument("--evidence-origin", default="contemporaneous")
     note.set_defaults(handler=cmd_note)
+
+    advance = subparsers.add_parser("advance", help="advance one gated research phase")
+    advance.add_argument("--record", type=Path, required=True)
+    advance.add_argument("--to", choices=PHASES[1:-1], required=True)
+    advance.add_argument("--artifact", action="append", default=[])
+    advance.add_argument("--retrospective", action="store_true")
+    advance.add_argument("--reason")
+    advance.set_defaults(handler=cmd_advance)
 
     finalize = subparsers.add_parser("finalize", help="attach artifacts and finalize the record")
     finalize.add_argument("--record", type=Path, required=True)

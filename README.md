@@ -116,6 +116,11 @@ boolean. `research_run.py` records explicitly authorized commands or unavailable
 identity, immutable source links, line ranges, publication safety, evidence consistency, and protocol values. See
 [`references/run-record.md`](references/run-record.md) for the workflow.
 
+Ranked findings use a structured `candidate-ledger.json`. `candidate_ledger.py` records coverage, representative traces,
+mechanism-level candidates, evidence, counterevidence, provenance, and runtime hypotheses; freezing writes a content
+hash and blocks later mutation. The run record enforces forward-only research phases so a report cannot finalize before
+inventory, candidate freeze, validation, comparator review, synthesis, and report validation are accounted for.
+
 ## Example finding shape
 
 A major finding is reported at mechanism level rather than as generic praise:
@@ -157,11 +162,13 @@ codebase-intelligence/
 │   └── openai.yaml
 ├── scripts/
 │   ├── repository_snapshot.py
+│   ├── candidate_ledger.py
 │   ├── research_run.py
 │   ├── validate_report.py
 │   └── test_*.py
 └── references/
     ├── design-and-value.md
+    ├── candidate-ledger.md
     ├── evidence-confidence.md
     ├── failure-modes.md
     ├── innovation.md

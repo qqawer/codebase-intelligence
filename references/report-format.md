@@ -17,8 +17,10 @@ date, source mode, worktree state, material source gaps, runtime validation, and
 repository-relative source references with line numbers or immutable remote links. Do not publish machine-specific
 absolute paths, credentials, private source, or raw conversation transcripts.
 
-Intermediate snapshots, candidate ledgers, and validation notes are supporting artifacts. Name and label them
-separately; none substitutes for the final report.
+Intermediate snapshots, candidate ledgers, run records, and validation receipts are supporting artifacts. Name and
+label them separately; none substitutes for the final report. For new full reports, preserve the hash-frozen
+`candidate-ledger.json`, its optional Markdown rendering, `run-record.json`, and `validation-receipt.json` beside the
+report.
 
 # Project Intelligence Report
 
