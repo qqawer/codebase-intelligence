@@ -127,6 +127,9 @@ Prefer conservative classification when evidence is incomplete.
 
 ## Comparator Ledger
 
+Use the frozen structured workflow in [comparator-ledger.md](comparator-ledger.md). The table below describes the
+semantic questions each entry must answer; it is not a substitute for the machine-readable ledger.
+
 Before using strong originality language, record:
 
 | Field | Required question |

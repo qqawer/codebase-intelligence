@@ -16,7 +16,7 @@ BEGIN = "<!-- BEGIN GENERATED FULL REPORT INDEX -->"
 END = "<!-- END GENERATED FULL REPORT INDEX -->"
 CANONICAL_FIELDS = {
     "id", "date", "class", "target_repository", "target_revision", "skill_ref", "source_mode",
-    "candidate_ledger", "run_record", "report", "verdict", "runtime_summary", "generated_from_run_record",
+    "candidate_ledger", "comparator_ledger", "run_record", "report", "verdict", "runtime_summary", "generated_from_run_record",
     "record_status",
 }
 
@@ -84,6 +84,9 @@ def record_entry(root: Path, record_path: Path, old: dict[str, Any] | None) -> d
     ledger = artifact_path(root, record_path, artifacts.get("candidate_ledger"), "candidate_ledger")
     if ledger:
         entry["candidate_ledger"] = ledger
+    comparator = artifact_path(root, record_path, artifacts.get("comparator_ledger"), "comparator_ledger")
+    if comparator:
+        entry["comparator_ledger"] = comparator
     if old:
         for key, value in old.items():
             if key not in CANONICAL_FIELDS:

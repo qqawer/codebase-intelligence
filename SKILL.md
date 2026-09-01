@@ -47,6 +47,9 @@ For substantial analysis:
 
 For full reports, ranked findings, blind validation, or originality analysis, use the structured candidate ledger and freeze it before project-public explanations or external comparator review can rewrite preliminary discovery. Read [references/candidate-ledger.md](references/candidate-ledger.md).
 
+After candidate freeze, full reports use a structured comparator ledger for Tier 3+ coverage, explicit exclusions,
+source identity limits, and calibrated originality effects. Read [references/comparator-ledger.md](references/comparator-ledger.md).
+
 ## Evidence and outcome discipline
 
 Keep architectural enablement, tested behavior, and measured outcomes distinct:
@@ -80,6 +83,7 @@ Read [references/run-record.md](references/run-record.md) before executing valid
 - Full report structure or review: [references/report-format.md](references/report-format.md)
 - Full-report execution records and phase gates: [references/run-record.md](references/run-record.md)
 - Ranked/frozen candidate workflow: [references/candidate-ledger.md](references/candidate-ledger.md)
+- Comparator coverage and originality evidence: [references/comparator-ledger.md](references/comparator-ledger.md)
 - A relevant known failure pattern or final full-report adversarial check: [references/failure-modes.md](references/failure-modes.md)
 
 Do not load every reference by default.
@@ -93,6 +97,8 @@ A full Project Intelligence Report requires a persistent Markdown artifact in th
 ├── PROJECT_INTELLIGENCE_REPORT.md
 ├── candidate-ledger.json
 ├── candidate-ledger.md
+├── comparator-ledger.json
+├── comparator-ledger.md
 ├── run-record.json
 └── validation-receipt.json
 ```

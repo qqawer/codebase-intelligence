@@ -16,9 +16,9 @@ python3 scripts/research_session.py init \
 ```
 
 The command resolves and records the remote, full commit, shallow/full state, clean worktree, and current Skill
-identity. It creates `reports/<owner>-<repository>/<short-revision>/` in a temporary staging directory and publishes it
-only after initialization and inventory succeed. It finishes in `inventoried`; it does not run target commands, choose
-candidates, or create report conclusions.
+identity. It creates `reports/<owner>-<repository>/<short-revision>/` with candidate and comparator ledgers in a
+temporary staging directory and publishes it only after initialization and inventory succeed. It finishes in
+`inventoried`; it does not run target commands, choose candidates, comparators, or report conclusions.
 
 At any point, inspect the next legal phase and its current gate failures:
 

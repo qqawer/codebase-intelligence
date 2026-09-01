@@ -14,6 +14,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 SESSION = SCRIPT_DIR / "research_session.py"
 RUN = SCRIPT_DIR / "research_run.py"
 LEDGER = SCRIPT_DIR / "candidate_ledger.py"
+COMPARATOR = SCRIPT_DIR / "comparator_ledger.py"
 
 
 class ResearchSessionTests(unittest.TestCase):
@@ -59,6 +60,7 @@ class ResearchSessionTests(unittest.TestCase):
         self.assertEqual(record["target"]["repository"], "https://github.com/example/project.git")
         self.assertEqual(ledger["run_id"], record["run_id"])
         self.assertTrue((report_dir / "repository-snapshot.json").is_file())
+        self.assertTrue((report_dir / "comparator-ledger.json").is_file())
         status = self.command(SESSION, "status", str(report_dir), "--format", "json")
         value = json.loads(status.stdout)
         self.assertEqual(value["next_phase"], "candidates-frozen")
@@ -90,8 +92,20 @@ class ResearchSessionTests(unittest.TestCase):
         self.assertEqual(self.command(RUN, "advance", "--record", str(record), "--to", "candidates-frozen", "--artifact", f"candidate_ledger={ledger_path}").returncode, 0)
         self.assertEqual(self.command(RUN, "note", "--record", str(record), "--category", "tests", "--status", "passed", "--reason", "fixture tests").returncode, 0)
         self.assertEqual(self.command(RUN, "advance", "--record", str(record), "--to", "runtime-validated").returncode, 0)
-        self.assertEqual(self.command(RUN, "note", "--record", str(record), "--category", "comparator-review", "--status", "observed", "--reason", "fixture comparator").returncode, 0)
-        self.assertEqual(self.command(RUN, "advance", "--record", str(record), "--to", "comparators-reviewed").returncode, 0)
+        comparator_path = report_dir / "comparator-ledger.json"
+        comparator = json.loads(comparator_path.read_text(encoding="utf-8"))
+        comparator["entries"] = [{
+            "id": "peer-project", "name": "Peer project", "candidate_ids": ["representative-mechanism"],
+            "source": {"type": "peer-repository", "title": "Peer", "url": "https://github.com/example/peer", "accessed_at": "2026-09-01", "identity_limit": "moving documentation"},
+            "problem": "fixture problem", "baseline": "fixture baseline", "shared_mechanism": "fixture mechanism",
+            "acknowledged_inspiration": "none found", "repository_difference": "bounded fixture difference",
+            "outcome_difference": "structurally enabled; not measured", "counterevidence": "peer establishes precedent",
+            "classification": "strong-engineering", "originality_effect": "lowers", "confidence": "medium",
+            "evidence": ["fixture comparison"],
+        }]
+        comparator_path.write_text(json.dumps(comparator, indent=2) + "\n", encoding="utf-8")
+        self.assertEqual(self.command(COMPARATOR, "freeze", "--ledger", str(comparator_path), "--candidate-ledger", str(ledger_path), "--note", "fixture comparator review").returncode, 0)
+        self.assertEqual(self.command(RUN, "advance", "--record", str(record), "--to", "comparators-reviewed", "--artifact", f"comparator_ledger={comparator_path}").returncode, 0)
         report = report_dir / "PROJECT_INTELLIGENCE_REPORT.md"
         report.write_text(
             f"""# Example Project Intelligence Report

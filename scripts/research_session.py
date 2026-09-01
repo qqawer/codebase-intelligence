@@ -156,6 +156,10 @@ def cmd_init(args: argparse.Namespace) -> int:
             "--source-mode", source_mode, "--freeze-boundary", args.freeze_boundary,
         )
         invoke(
+            "comparator_ledger.py", "init", "--output", str(staging / "comparator-ledger.json"),
+            "--run-record", str(staging / "run-record.json"), "--scope", args.comparator_scope,
+        )
+        invoke(
             "research_run.py", "advance", "--record", str(staging / "run-record.json"), "--to", "inventoried",
             "--artifact", f"repository_snapshot={snapshot}",
         )
@@ -164,6 +168,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         "report_directory": str(target),
         "run_record": str(target / "run-record.json"),
         "candidate_ledger": str(target / "candidate-ledger.json"),
+        "comparator_ledger": str(target / "comparator-ledger.json"),
         "repository_snapshot": str(target / "repository-snapshot.json"),
         "phase": "inventoried",
         "target_repository": repository,
@@ -185,6 +190,7 @@ def status_value(path: Path) -> dict[str, Any]:
     candidates = {
         "repository_snapshot": path.parent / "repository-snapshot.json",
         "candidate_ledger": path.parent / "candidate-ledger.json",
+        "comparator_ledger": path.parent / "comparator-ledger.json",
         "report": path.parent / "PROJECT_INTELLIGENCE_REPORT.md",
         "validation_receipt": path.parent / "validation-receipt.json",
     }
@@ -237,13 +243,15 @@ def cmd_publish(args: argparse.Namespace) -> int:
         raise SystemExit("run record artifacts must be an object")
     report_name = artifacts.get("report")
     ledger_name = artifacts.get("candidate_ledger")
+    comparator_name = artifacts.get("comparator_ledger")
     report = path.parent / str(report_name or "PROJECT_INTELLIGENCE_REPORT.md")
     ledger = path.parent / str(ledger_name or "candidate-ledger.json")
-    if not report.is_file() or not ledger.is_file():
-        raise SystemExit("publish requires existing report and candidate ledger artifacts")
+    comparator = path.parent / str(comparator_name or "comparator-ledger.json")
+    if not report.is_file() or not ledger.is_file() or not comparator.is_file():
+        raise SystemExit("publish requires existing report, candidate ledger, and comparator ledger artifacts")
     receipt = path.parent / "validation-receipt.json"
     validator = [
-        str(report), "--run-record", str(path), "--candidate-ledger", str(ledger),
+        str(report), "--run-record", str(path), "--candidate-ledger", str(ledger), "--comparator-ledger", str(comparator),
         "--strict", "--write-receipt", str(receipt),
     ]
     if args.target_checkout:
@@ -256,7 +264,7 @@ def cmd_publish(args: argparse.Namespace) -> int:
     )
     invoke("build_research_index.py", str(research_root), "--write")
     final_validator = [
-        str(report), "--run-record", str(path), "--candidate-ledger", str(ledger), "--run-index", str(index), "--strict",
+        str(report), "--run-record", str(path), "--candidate-ledger", str(ledger), "--comparator-ledger", str(comparator), "--run-index", str(index), "--strict",
     ]
     if args.target_checkout:
         final_validator.extend(["--target-checkout", str(args.target_checkout.resolve())])
@@ -280,6 +288,7 @@ def build_parser() -> argparse.ArgumentParser:
     initialize.add_argument("--analysis-date")
     initialize.add_argument("--skill-ref")
     initialize.add_argument("--freeze-boundary", default="Before project-public explanations and external comparator review")
+    initialize.add_argument("--comparator-scope", default="Tier 3+ candidates and any lower-tier candidate with an originality claim")
     initialize.add_argument("--format", choices=("text", "json"), default="text")
     initialize.set_defaults(handler=cmd_init)
 

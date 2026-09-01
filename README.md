@@ -131,6 +131,10 @@ mechanism-level candidates, evidence, counterevidence, provenance, and runtime h
 hash and blocks later mutation. The run record enforces forward-only research phases so a report cannot finalize before
 inventory, candidate freeze, validation, comparator review, synthesis, and report validation are accounted for.
 
+Comparator research uses a separate `comparator-ledger.json`. `comparator_ledger.py` requires every Tier 3+ candidate
+to have comparison coverage or an explicit exclusion, preserves source identity limits and access dates, records the
+material difference and strongest originality counterevidence, and freezes the result before synthesis.
+
 ## Example finding shape
 
 A major finding is reported at mechanism level rather than as generic praise:
@@ -174,6 +178,7 @@ codebase-intelligence/
 │   ├── repository_snapshot.py
 │   ├── candidate_ledger.py
 │   ├── build_research_index.py
+│   ├── comparator_ledger.py
 │   ├── research_session.py
 │   ├── research_run.py
 │   ├── source_link.py
@@ -182,6 +187,7 @@ codebase-intelligence/
 └── references/
     ├── design-and-value.md
     ├── candidate-ledger.md
+    ├── comparator-ledger.md
     ├── evidence-confidence.md
     ├── failure-modes.md
     ├── innovation.md

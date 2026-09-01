@@ -280,8 +280,34 @@ def gate_phase(record: dict[str, Any], record_path: Path, next_phase: str, suppl
             errors.append("runtime-validated cannot contain in-progress entries")
     elif next_phase == "comparators-reviewed":
         reviewed = any(entry.get("category") == "comparator-review" for entry in record.get("entries", []))
-        if not reviewed and "comparator_ledger" not in supplied and "comparator_ledger" not in artifacts:
-            errors.append("comparators-reviewed requires a comparator-review entry or comparator_ledger")
+        comparator_value = supplied.get("comparator_ledger")
+        if comparator_value is None and artifacts.get("comparator_ledger"):
+            comparator_value = record_path_for_artifact(record_path.parent, artifacts["comparator_ledger"])
+        full_report = record.get("run_class") == "full-project-intelligence-report"
+        if comparator_value is None:
+            if full_report:
+                errors.append("comparators-reviewed requires comparator_ledger for a full report")
+            elif not reviewed:
+                errors.append("comparators-reviewed requires a comparator-review entry or comparator_ledger")
+        elif not comparator_value.is_file():
+            errors.append(f"comparator ledger does not exist: {comparator_value}")
+        else:
+            candidate_value = artifacts.get("candidate_ledger")
+            candidate_path = record_path_for_artifact(record_path.parent, candidate_value) if candidate_value else None
+            try:
+                from comparator_ledger import load as load_comparator_ledger, validate as validate_comparator_ledger
+                from candidate_ledger import load as load_candidate_ledger
+                candidate = load_candidate_ledger(candidate_path) if candidate_path and candidate_path.is_file() else None
+                comparator = load_comparator_ledger(comparator_value)
+                errors.extend(f"comparator ledger: {error}" for error in validate_comparator_ledger(comparator, candidate, require_frozen=True))
+                if comparator.get("run_id") != record.get("run_id"):
+                    errors.append("comparator ledger run_id does not match run record")
+                comparator_target = comparator.get("target", {})
+                record_target = record.get("target", {})
+                if not isinstance(comparator_target, dict) or not isinstance(record_target, dict) or comparator_target.get("revision") != record_target.get("revision"):
+                    errors.append("comparator ledger target revision does not match run record")
+            except (ImportError, SystemExit) as error:
+                errors.append(f"comparator ledger could not be validated: {error}")
     elif next_phase == "synthesized":
         path = supplied.get("report")
         if path is None or not path.is_file():

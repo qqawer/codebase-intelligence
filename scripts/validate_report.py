@@ -185,6 +185,31 @@ def validate_ledger(path: Path | None, record: dict[str, Any], findings: list[Fi
                 findings.append(Finding("error", "ledger-revision", "candidate ledger revision does not match run record"))
 
 
+def validate_comparator_ledger(path: Path | None, candidate_path: Path | None, record: dict[str, Any], findings: list[Finding]) -> None:
+    if path is None:
+        return
+    if not path.is_file():
+        findings.append(Finding("error", "comparator-ledger-missing", f"comparator ledger does not exist: {path}"))
+        return
+    try:
+        from comparator_ledger import load as load_comparator, validate as validate_comparator
+        from candidate_ledger import load as load_candidate
+        candidate = load_candidate(candidate_path) if candidate_path and candidate_path.is_file() else None
+        ledger = load_comparator(path)
+        errors = validate_comparator(ledger, candidate, require_frozen=True)
+    except (ImportError, SystemExit) as error:
+        findings.append(Finding("error", "comparator-ledger-json", f"comparator ledger could not be validated: {error}"))
+        return
+    for error in errors:
+        findings.append(Finding("error", "comparator-ledger-json", error))
+    if ledger.get("run_id") != record.get("run_id"):
+        findings.append(Finding("error", "comparator-ledger-run", "comparator ledger run_id does not match run record"))
+    ledger_target = ledger.get("target", {})
+    record_target = record.get("target", {})
+    if not isinstance(ledger_target, dict) or not isinstance(record_target, dict) or ledger_target.get("revision") != record_target.get("revision"):
+        findings.append(Finding("error", "comparator-ledger-revision", "comparator ledger revision does not match run record"))
+
+
 def validate_index(path: Path | None, record: dict[str, Any], findings: list[Finding]) -> None:
     if path is None:
         return
@@ -234,6 +259,7 @@ def main() -> int:
     parser.add_argument("report", type=Path)
     parser.add_argument("--run-record", type=Path, required=True)
     parser.add_argument("--candidate-ledger", type=Path)
+    parser.add_argument("--comparator-ledger", type=Path)
     parser.add_argument("--target-checkout", type=Path)
     parser.add_argument("--run-index", type=Path)
     parser.add_argument("--format", choices=("text", "json"), default="text")
@@ -257,6 +283,7 @@ def main() -> int:
             validate_checkout(args.target_checkout, record, findings)
         validate_links(text, record, args.target_checkout, findings)
         validate_ledger(args.candidate_ledger, record, findings)
+        validate_comparator_ledger(args.comparator_ledger, args.candidate_ledger, record, findings)
         validate_index(args.run_index, record, findings)
     render(findings, args.format)
     if args.write_receipt:

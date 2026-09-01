@@ -21,6 +21,7 @@ class BuildResearchIndexTests(unittest.TestCase):
         report_dir.mkdir(parents=True)
         (report_dir / "PROJECT_INTELLIGENCE_REPORT.md").write_text("# Example Project Intelligence Report\n", encoding="utf-8")
         (report_dir / "candidate-ledger.json").write_text("{}\n", encoding="utf-8")
+        (report_dir / "comparator-ledger.json").write_text("{}\n", encoding="utf-8")
         record = {
             "schema_version": 2,
             "run_id": "generated-run",
@@ -29,7 +30,7 @@ class BuildResearchIndexTests(unittest.TestCase):
             "source_mode": "local-pinned",
             "target": {"repository": "https://github.com/example/project.git", "revision": "a" * 40},
             "skill": {"revision": "b" * 40},
-            "artifacts": {"report": "PROJECT_INTELLIGENCE_REPORT.md", "candidate_ledger": "candidate-ledger.json"},
+            "artifacts": {"report": "PROJECT_INTELLIGENCE_REPORT.md", "candidate_ledger": "candidate-ledger.json", "comparator_ledger": "comparator-ledger.json"},
             "verdict": "PASS",
             "runtime_summary": {"counts": {"passed": 2, "unavailable": 1}, "end_to_end": False},
             "phase": "finalized",
@@ -64,6 +65,7 @@ class BuildResearchIndexTests(unittest.TestCase):
         by_id = {item["id"]: item for item in value["runs"]}
         self.assertIn("legacy", by_id)
         self.assertEqual(by_id["generated-run"]["target_revision"], "a" * 40)
+        self.assertEqual(by_id["generated-run"]["comparator_ledger"], "reports/example-project/a1b2c3d/comparator-ledger.json")
         self.assertEqual(by_id["generated-run"]["runtime"], "Detailed runtime wording")
         self.assertNotIn("record_status", by_id["generated-run"])
         readme = (self.root / "README.md").read_text(encoding="utf-8")

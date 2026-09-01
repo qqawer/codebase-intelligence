@@ -142,6 +142,22 @@ class ResearchRunTests(unittest.TestCase):
         self.assertNotEqual(completed.returncode, 0)
         self.assertIn("does not match", completed.stderr)
 
+    def test_full_report_requires_structured_comparator_ledger(self) -> None:
+        value = self.load()
+        value["run_class"] = "full-project-intelligence-report"
+        self.record.write_text(json.dumps(value), encoding="utf-8")
+        subprocess.run([sys.executable, str(SCRIPT), "note", "--record", str(self.record), "--category", "tests", "--status", "not-run", "--reason", "fixture"], check=True)
+        for phase in ("inventoried", "candidates-frozen"):
+            subprocess.run([sys.executable, str(SCRIPT), "advance", "--record", str(self.record), "--to", phase, "--retrospective", "--reason", "fixture"], check=True, capture_output=True)
+        subprocess.run([sys.executable, str(SCRIPT), "advance", "--record", str(self.record), "--to", "runtime-validated"], check=True)
+        subprocess.run([sys.executable, str(SCRIPT), "note", "--record", str(self.record), "--category", "comparator-review", "--status", "observed", "--reason", "unstructured fixture"], check=True)
+        completed = subprocess.run(
+            [sys.executable, str(SCRIPT), "advance", "--record", str(self.record), "--to", "comparators-reviewed"],
+            text=True, capture_output=True, check=False,
+        )
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("requires comparator_ledger", completed.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
