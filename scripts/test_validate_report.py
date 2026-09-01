@@ -141,6 +141,66 @@ Measurement details remain uncertain.
         codes = {item["code"] for item in json.loads(completed.stdout)["findings"]}
         self.assertIn("measurement-evidence", codes)
 
+    def test_negated_external_measurement_does_not_require_passed_benchmark(self) -> None:
+        self.ledger.write_text("# Frozen candidates\n", encoding="utf-8")
+        self.index.write_text(json.dumps({"runs": [{"id": "fixture", "target_revision": self.revision}]}), encoding="utf-8")
+        self.report.write_text(
+            f"""# Project Intelligence Report
+
+Analysis date: 2026-09-01
+Revision: `{self.revision}`
+Source mode: `local-pinned`
+Worktree: clean
+
+## Runtime validation
+
+Project tests passed. This run did not independently reproduce the `10-100x faster than baseline` headline.
+
+## Uncertainty ledger
+
+Performance remains unmeasured here.
+
+## Coverage ledger
+
+[source](https://github.com/example/project/blob/{self.revision}/main.py#L1-L3)
+""",
+            encoding="utf-8",
+        )
+        self.write_record()
+        completed = self.run_validator()
+        codes = {item["code"] for item in json.loads(completed.stdout)["findings"]}
+        self.assertNotIn("measurement-evidence", codes)
+
+    def test_unrelated_negation_does_not_hide_measurement_claim(self) -> None:
+        self.ledger.write_text("# Frozen candidates\n", encoding="utf-8")
+        self.index.write_text(json.dumps({"runs": [{"id": "fixture", "target_revision": self.revision}]}), encoding="utf-8")
+        self.report.write_text(
+            f"""# Project Intelligence Report
+
+Analysis date: 2026-09-01
+Revision: `{self.revision}`
+Source mode: `local-pinned`
+Worktree: clean
+
+## Runtime validation
+
+Project tests passed. We did not benchmark startup, but throughput was measured to be 25% faster than baseline.
+
+## Uncertainty ledger
+
+Startup remains unmeasured.
+
+## Coverage ledger
+
+[source](https://github.com/example/project/blob/{self.revision}/main.py#L1-L3)
+""",
+            encoding="utf-8",
+        )
+        self.write_record()
+        completed = self.run_validator()
+        codes = {item["code"] for item in json.loads(completed.stdout)["findings"]}
+        self.assertIn("measurement-evidence", codes)
+
 
 if __name__ == "__main__":
     unittest.main()

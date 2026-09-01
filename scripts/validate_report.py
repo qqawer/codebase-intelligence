@@ -117,7 +117,14 @@ def validate_report_text(text: str, record: dict[str, Any], findings: list[Findi
         r"(?i)(?:\bmeasured\s+(?:at|to|as)\b|\b\d+(?:\.\d+)?%\s+(?:faster|slower|less memory|lower memory)|\b(?:faster|slower|lower memory|more scalable)\s+than\b|实测(?:为|达到|提升|降低)|(?:提升|降低)\s*\d+(?:\.\d+)?%)",
         text,
     )
-    if measured_outcome and not any("bench" in item or "performance" in item for item in passed_categories):
+    measurement_negated = bool(
+        measured_outcome
+        and re.search(
+            r"(?i)\b(?:did not|does not|cannot|could not)\s+(?:independently\s+)?(?:reproduce|verify|confirm|measure|benchmark)\b[^.!?,;\n]{0,140}$",
+            text[max(0, measured_outcome.start() - 180) : measured_outcome.start()],
+        )
+    )
+    if measured_outcome and not measurement_negated and not any("bench" in item or "performance" in item for item in passed_categories):
         findings.append(Finding("warning", "measurement-evidence", "report uses measurement/performance language without a passed benchmark entry"))
     if re.search(r"(?i)innovati|original|原创|创新", text) and not re.search(r"(?i)comparator|precedent|originality|上游|先例|原创性", text):
         findings.append(Finding("warning", "originality-evidence", "originality language appears without comparator/provenance discussion"))

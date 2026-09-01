@@ -43,7 +43,7 @@ class BuildResearchIndexTests(unittest.TestCase):
             "skill_repository": "https://github.com/qqawer/codebase-intelligence",
             "runs": [
                 {"id": "legacy", "date": "2026-08-31", "class": "full-project-intelligence-report", "target_repository": "https://github.com/example/legacy.git", "target_revision": "c" * 40, "report": "reports/legacy/PROJECT_INTELLIGENCE_REPORT.md", "runtime": "Legacy evidence"},
-                {"id": "generated-run", "date": "old", "runtime": "Detailed runtime wording", "report": "wrong"},
+                {"id": "generated-run", "date": "old", "runtime": "Detailed runtime wording", "report": "wrong", "record_status": "legacy report without run-record.json"},
             ],
         }
         (self.root / "runs.json").write_text(json.dumps(self.index), encoding="utf-8")
@@ -65,6 +65,7 @@ class BuildResearchIndexTests(unittest.TestCase):
         self.assertIn("legacy", by_id)
         self.assertEqual(by_id["generated-run"]["target_revision"], "a" * 40)
         self.assertEqual(by_id["generated-run"]["runtime"], "Detailed runtime wording")
+        self.assertNotIn("record_status", by_id["generated-run"])
         readme = (self.root / "README.md").read_text(encoding="utf-8")
         self.assertIn("BEGIN GENERATED FULL REPORT INDEX", readme)
         self.assertIn("| Example |", readme)

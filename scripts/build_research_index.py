@@ -17,6 +17,7 @@ END = "<!-- END GENERATED FULL REPORT INDEX -->"
 CANONICAL_FIELDS = {
     "id", "date", "class", "target_repository", "target_revision", "skill_ref", "source_mode",
     "candidate_ledger", "run_record", "report", "verdict", "runtime_summary", "generated_from_run_record",
+    "record_status",
 }
 
 
