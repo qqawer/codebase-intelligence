@@ -6,6 +6,20 @@ Optimize for insight density rather than document length.
 
 Do not force every section when evidence is insufficient.
 
+## Artifact contract
+
+A full Project Intelligence Report is a persistent Markdown artifact, not only a chat response. Follow the destination
+and naming rules in `SKILL.md`, write the complete artifact before reporting completion, and return a clickable file
+link plus a concise verdict in chat.
+
+The artifact must be self-contained enough to interpret later. Record repository identity, exact revision, analysis
+date, source mode, worktree state, material source gaps, runtime validation, and the evidence ceiling. Use
+repository-relative source references with line numbers or immutable remote links. Do not publish machine-specific
+absolute paths, credentials, private source, or raw conversation transcripts.
+
+Intermediate snapshots, candidate ledgers, and validation notes are supporting artifacts. Name and label them
+separately; none substitutes for the final report.
+
 # Project Intelligence Report
 
 ## 1. Executive Technical Summary
@@ -382,6 +396,8 @@ is better than an unsupported innovation claim.
 
 Before returning the report verify:
 
+- the complete Markdown artifact exists at the declared destination
+- the final response links the artifact and does not mislabel an intermediate snapshot as the report
 - architecture claims are behavior-backed
 - important execution paths were traced
 - parent subsystems received nested candidate discovery

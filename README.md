@@ -10,6 +10,8 @@ from originality and plausible innovation.
 
 Depending on the question and available evidence, Codebase Intelligence can produce:
 
+- a bounded, machine-readable repository discovery snapshot
+- a persistent Markdown Project Intelligence Report for a full analysis
 - a repository and runtime architecture map
 - representative end-to-end execution traces
 - ranked technical highlights at mechanism level
@@ -20,6 +22,11 @@ Depending on the question and available evidence, Codebase Intelligence can prod
 - weaknesses, trade-offs, and recommended learning targets
 
 The default is an insight-dense report shaped by the repository—not a fixed inventory of every directory.
+
+For a full analysis, the report is written to a dedicated Markdown artifact before completion. The final chat response
+links that file and gives a concise verdict. Focused questions may remain conversational. Generated reports belong in a
+user-selected or dedicated research workspace, not in this installable Skill or the analyzed repository unless that
+location is explicitly requested.
 
 ## Why it is different
 
@@ -92,6 +99,17 @@ Tell me what an experienced engineer should study in this codebase, with evidenc
 The skill supports normal implicit discovery when a request clearly calls for deep repository understanding. It is
 currently Codex-first; compatibility with other agent harnesses has not been validated.
 
+For a compact read-only inventory without running the full analysis:
+
+```bash
+python3 scripts/repository_snapshot.py /path/to/repository --format markdown
+python3 scripts/repository_snapshot.py /path/to/repository --format json
+```
+
+The script uses only the Python standard library. It records Git identity and worktree state and identifies bounded
+discovery clusters such as manifests, likely entry points, tests, benchmarks, documentation, CI, and source boundaries.
+Its classifications are starting points for investigation, not architecture or quality conclusions.
+
 ## Example finding shape
 
 A major finding is reported at mechanism level rather than as generic praise:
@@ -131,6 +149,9 @@ codebase-intelligence/
 ├── LICENSE
 ├── agents/
 │   └── openai.yaml
+├── scripts/
+│   ├── repository_snapshot.py
+│   └── test_repository_snapshot.py
 └── references/
     ├── design-and-value.md
     ├── evidence-confidence.md
@@ -152,6 +173,9 @@ analyses, or conversation transcripts.
 - failure modes for relevant corrections and final adversarial review
 - report format for full Project Intelligence Reports
 
+The repository snapshot script is executed only for local source discovery. Its implementation does not need to be
+loaded into model context during ordinary use.
+
 ## Limitations
 
 - Findings are bounded by the source, revision, history, generated files, dependencies, and runtime evidence available.
@@ -170,6 +194,14 @@ python3 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py .
 
 The validator checks structure and metadata. Behavioral confidence comes from realistic repository analyses, not from
 schema validation alone.
+
+Smoke-test the bundled read-only inventory in both output formats:
+
+```bash
+python3 -m unittest scripts/test_repository_snapshot.py
+python3 scripts/repository_snapshot.py . --format markdown --max-items 5
+python3 scripts/repository_snapshot.py . --format json --max-items 5
+```
 
 ## License
 

@@ -37,6 +37,19 @@ source gaps such as unavailable submodules, Git LFS objects, generated sources, 
 A local checkout is not `local-pinned` merely because it is on disk. If the revision or local modifications are unknown,
 state that limitation and do not present cross-run differences as methodology regressions.
 
+For a local checkout, resolve `scripts/repository_snapshot.py` relative to this `SKILL.md` and run it once before manual
+discovery:
+
+```bash
+python3 <skill-directory>/scripts/repository_snapshot.py <repository-path> --format markdown
+```
+
+Use `--format json` when machine-readable evidence is more useful. The script is read-only, has bounded output, and
+collects repository identity, worktree state, language and extension counts, manifests, candidate entry points, tests,
+benchmarks, documentation, CI, submodules, LFS patterns, and likely generated/vendor boundaries. Treat every path
+classification as a discovery hint. Verify ambiguous cases in source, and continue manually if Python or Git metadata is
+unavailable.
+
 ## 2. Discover broadly before analyzing deeply
 
 Build a repository coverage map.
@@ -245,6 +258,30 @@ Load references progressively instead of reading all of them by default:
 ## Final output
 
 Prioritize insight density.
+
+### Delivery contract
+
+For a full Project Intelligence Report, a persistent Markdown artifact is required. Resolve its destination before
+final synthesis, using the user's explicit path or an existing dedicated research/report workspace when available. Do
+not place generated reports in this Skill directory or modify the analyzed repository unless the user explicitly asks
+for that location. If no safe durable destination is available, ask for one rather than silently returning only chat
+text or writing into the target repository.
+
+Use a reproducible path such as:
+
+```text
+<report-workspace>/reports/<owner>-<repository>/<short-revision>/PROJECT_INTELLIGENCE_REPORT.md
+```
+
+Write the complete report to the Markdown artifact before claiming completion. The final chat response should link the
+artifact and summarize the verdict, strongest findings, evidence limits, and validation status instead of duplicating
+the entire report. Keep repository identity, exact revision, analysis date, worktree state, source mode, and material
+evidence gaps inside the artifact. Avoid machine-specific absolute source paths in report content intended for
+publication; use repository-relative paths with line numbers or immutable remote links.
+
+A focused repository question, preliminary candidate ledger, or interactive exploration may remain chat-only unless
+the user requests a file. Clearly label snapshots and intermediate ledgers so they cannot be mistaken for the final
+report.
 
 Explain:
 
